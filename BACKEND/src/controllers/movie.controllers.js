@@ -1,0 +1,96 @@
+
+const axios = require("axios");
+async function getPopularMovies(req, res) {
+    try {
+        
+        const response = await axios.get(
+            "https://api.themoviedb.org/3/movie/popular",
+            {
+                params: {
+                    api_key: process.env.TMDB_API_KEY
+                }
+            }
+        );
+        res.status(200).json(response.data);
+    } catch (error) {
+
+    console.log("STATUS:",
+        error.response?.status);
+
+    console.log("DATA:",
+        error.response?.data);
+
+    console.log("MESSAGE:",
+        error.message);
+
+    res.status(500).json({
+        error: error.message
+    });
+}
+}
+async function getTopRatedMovies(req, res) {
+    try {   
+        
+        const response = await axios.get(
+            "https://api.themoviedb.org/3/movie/top_rated",
+            {
+                params: {
+                    api_key: process.env.TMDB_API_KEY
+                }
+            }
+        );
+        res.status(200).json(response.data);
+    } catch (error) {
+        console.error("Error fetching top rated movies:", error.message);
+        console.log(error.response?.status);
+console.log(error.response?.data);
+        res.status(500).json({
+            error: error.message
+        });
+    }
+}
+async function getUpcomingMovies(req, res) {
+    try {   
+        const response = await axios.get(     
+        "https://api.themoviedb.org/3/movie/upcoming",
+        {
+            params: {
+                api_key: process.env.TMDB_API_KEY
+            }
+        }
+    );
+    res.status(200).json(response.data);
+} catch (error) {
+    console.error("Error fetching upcoming movies:", error.message);
+    res.status(500).json({
+        error: error.message
+    });
+}
+}
+async function getMovieDetails(req, res) {
+    const movieId = req.params.id;
+    try {
+        const response = await axios.get(           
+            `https://api.themoviedb.org/3/movie/${movieId}`,
+            {
+                params: {
+                    api_key: process.env.TMDB_API_KEY
+                }
+            }
+        );
+        res.status(200).json(response.data);
+    } catch (error) {console.log("MESSAGE:", error.message);
+console.log("CODE:", error.code);
+
+if (error.response) {
+    console.log("STATUS:", error.response.status);
+    console.log("DATA:", error.response.data);
+}
+    }
+}
+module.exports = {
+    getPopularMovies,
+    getTopRatedMovies,
+    getUpcomingMovies,
+    getMovieDetails
+}
