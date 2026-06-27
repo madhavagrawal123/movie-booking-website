@@ -28,6 +28,19 @@ const showSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+     movieTitle: {
+        type: String,
+        required: true,
+    },
+
+    posterPath: {
+        type: String,
+        required: true,
+    },
+
+    backdropPath: {
+        type: String
+    },
   },
   {
     timestamps: true,

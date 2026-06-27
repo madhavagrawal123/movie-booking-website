@@ -18,7 +18,9 @@ async function Allshows(req, res) {
     if (availableTheatres.length === 0) {
       return res.status(404).json({ message: "No theatres found in the specified city." });
     }
+
     const theatreIds = availableTheatres.map(theatre => theatre._id);
+    
     const shows = await showmodel.find({
       theatreId: { $in: theatreIds },
       tmdbMovieId: movieId,
@@ -33,11 +35,16 @@ console.log(shows);
 if (!grouped[theatreId]) {
   grouped[theatreId] = {
     theatreName: show.theatreId.name,
+    
     timings: []
   };
 }
 
-grouped[theatreId].timings.push(show.showTime);
+
+grouped[theatreId].timings.push({
+    showId: show._id,
+    time: show.showTime
+});
     }
     const result = Object.values(grouped);
 
@@ -55,7 +62,7 @@ async function holdSeats(req, res) {
   const session = await mongoose.startSession();
 
   try {
-    const { userId } = req.user.id;
+    const userId = req.user.id;
     const { showId   } = req.params;
     const {  seatNumbers } = req.body;
 
@@ -291,6 +298,12 @@ async function cancelBooking(req, res) {
         message: "Booking already cancelled",
       });
     }
+    if (booking.userId.toString() !== req.user.id) {
+  return res.status(403).json({
+    success: false,
+    message: "You are not authorized to cancel this booking",
+  });
+}
       const show = await showmodel.findById(booking.showId);
 
       const showDateTime = new Date(
@@ -338,22 +351,74 @@ async function cancelBooking(req, res) {
       });
     }}
   
+async function getBookingHistory(req, res) {
+    try {
 
+        const userId = req.user.id;
 
+        const bookings = await bookingmodel
+            .find({ userId })
+            .populate({
+                path: "showId",
+                select:
+                    "tmdbMovieId movieTitle posterPath backdropPath showDate showTime theatreId screenId",
+                populate: [
+                    {
+                        path: "theatreId",
+                        select: "name city address"
+                    },
+                    {
+                        path: "screenId",
+                        select: "screenName"
+                    }
+                ]
+            })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            bookings
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+}
+  
   async function wishlistcontroller(req, res) {
-    const {userId} = req.user;
-    const {  tmdbMovieId } = req.parmas;
-
+    const userId = req.user.id;
+    const {  tmdbMovieId } = req.params;
+    const {
+    title,
+    posterPath,
+    backdropPath,
+    voteAverage,
+    releaseDate
+} = req.body;
     try {
       const existingEntry = await Wishlist.findOne({ userId, tmdbMovieId });  
       if (existingEntry) {
-        return res.status(400).json({
-          success: false,
-          message: "Movie already in wishlist",
-        });
-
-      }
-      const newEntry = await Wishlist.create({ userId, tmdbMovieId });
+      await Wishlist.deleteOne({ userId, tmdbMovieId });
+      
+      return res.status(200).json({
+        success: true,
+        message: "Movie removed from wishlist",
+      });
+   }
+      const newEntry = await Wishlist.create({
+    userId,
+    tmdbMovieId,
+    title,
+    posterPath,
+    backdropPath,
+    voteAverage,
+    releaseDate
+});
       res.status(201).json({
         success: true,
         message: "Movie added to wishlist",
@@ -369,6 +434,58 @@ async function cancelBooking(req, res) {
       });
     }
   };
+
+  async function getWishlist(req, res) {
+    try {
+
+        const userId = req.user.id;
+
+        const wishlist = await Wishlist.find({ userId });
+
+        res.status(200).json({
+            success: true,
+            wishlist
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+}
+
+async function checkWishlist(req, res) {
+
+    try {
+
+        const userId = req.user.id;
+
+        const { tmdbMovieId } = req.params;
+
+        const exists = await Wishlist.findOne({
+            userId,
+            tmdbMovieId
+        });
+
+        res.status(200).json({
+            success: true,
+            exists: !!exists
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+}
+
   async function createReview(req, res) {
     const { userId } = req.user;
     const { tmdbMovieId } = req.params;
@@ -449,5 +566,8 @@ async function updateReview(req, res) {
     getReview,
     updateReview,       
     getShowSeats,
+    getBookingHistory,
+    getWishlist,
+    checkWishlist
 
   };

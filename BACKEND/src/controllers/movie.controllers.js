@@ -1,14 +1,26 @@
-
 const axios = require("axios");
+const axiosRetry = require("axios-retry").default;
+
+axiosRetry(axios, {
+    retries: 3,
+    retryDelay: axiosRetry.exponentialDelay,
+    retryCondition: (error) =>
+        error.code === "ECONNRESET"
+});
+
 async function getPopularMovies(req, res) {
+    console.log("backend-hitting")
+   
     try {
+        
         
         const response = await axios.get(
             "https://api.themoviedb.org/3/movie/popular",
             {
                 params: {
                     api_key: process.env.TMDB_API_KEY
-                }
+                },
+                 timeout: 10000
             }
         );
         res.status(200).json(response.data);
@@ -22,7 +34,7 @@ async function getPopularMovies(req, res) {
 
     console.log("MESSAGE:",
         error.message);
-
+    console.log("code",error.code);
     res.status(500).json({
         error: error.message
     });
@@ -36,7 +48,8 @@ async function getTopRatedMovies(req, res) {
             {
                 params: {
                     api_key: process.env.TMDB_API_KEY
-                }
+                }, 
+                 timeout: 10000
             }
         );
         res.status(200).json(response.data);
@@ -56,12 +69,14 @@ async function getUpcomingMovies(req, res) {
         {
             params: {
                 api_key: process.env.TMDB_API_KEY
-            }
+            },
+             timeout: 10000
         }
     );
     res.status(200).json(response.data);
 } catch (error) {
     console.error("Error fetching upcoming movies:", error.message);
+    console.log("error-code",error.code);
     res.status(500).json({
         error: error.message
     });
@@ -75,7 +90,8 @@ async function getMovieDetails(req, res) {
             {
                 params: {
                     api_key: process.env.TMDB_API_KEY
-                }
+                },
+                 timeout: 10000
             }
         );
         res.status(200).json(response.data);

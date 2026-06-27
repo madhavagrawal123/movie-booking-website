@@ -12,6 +12,15 @@ const wishlistSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    title: String,
+
+    posterPath: String,
+
+    backdropPath: String,
+
+    voteAverage: Number,
+
+    releaseDate: String
   },
   {
     timestamps: true,

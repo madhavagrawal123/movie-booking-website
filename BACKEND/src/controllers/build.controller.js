@@ -185,11 +185,14 @@ async function createShow(req, res) {
        console.log(req.body.movieId);
         const { theatreId, screenId } = req.params;
 
-        const {
-            movieId,
-            date,
-            time
-        } = req.body;
+       const {
+    movieId,
+    movieTitle,
+    posterPath,
+    backdropPath,
+    date,
+    time
+} = req.body;
        
         const screen = await Screen.findOne({
             _id: screenId,
@@ -204,8 +207,11 @@ async function createShow(req, res) {
         }
 
 
-       const show = await Show.create({
+      const show = await Show.create({
     tmdbMovieId: movieId,
+    movieTitle,
+    posterPath,
+    backdropPath,
     theatreId,
     screenId,
     showDate: date,
@@ -238,10 +244,16 @@ async function createShow(req, res) {
 }
 async function updateShow(req, res) {
     try{
-        console.log("BODY:", req.body);
-console.log("PARAMS:", req.params);
+       
         const { showId } = req.params;
-        const { movieId, date, time } = req.body;
+       const {
+    movieId,
+    movieTitle,
+    posterPath,
+    backdropPath,
+    date,
+    time
+} = req.body;
         const show = await Show.findById(showId);
         if(!show) {
             return res.status(404).json({
@@ -249,8 +261,11 @@ console.log("PARAMS:", req.params);
             });
         }
         show.tmdbMovieId = movieId || show.tmdbMovieId;
-        show.showDate = date || show.showDate;
-        show.showTime = time || show.showTime;
+show.movieTitle = movieTitle || show.movieTitle;
+show.posterPath = posterPath || show.posterPath;
+show.backdropPath = backdropPath || show.backdropPath;
+show.showDate = date || show.showDate;
+show.showTime = time || show.showTime;
         await show.save();
         res.status(200).json({
             message: "Show updated successfully",
