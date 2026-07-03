@@ -1,0 +1,14 @@
+.Toastify__toast {
+  background: #18181b;          
+  color: white;
+  border: 1px solid #dc2626;    
+  border-radius: 12px;
+}
+
+.Toastify__progress-bar {
+  background: #dc2626;
+}
+
+.Toastify__close-button {
+  color: white;
+}

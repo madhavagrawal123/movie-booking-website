@@ -458,7 +458,7 @@ async function getBookingHistory(req, res) {
 }
 
 async function checkWishlist(req, res) {
-
+    
     try {
 
         const userId = req.user.id;

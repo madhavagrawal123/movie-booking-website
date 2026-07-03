@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
-
+import { toast } from "react-toastify";
 import {
   getShowSeats,
   holdSeats,
@@ -79,13 +79,12 @@ function SeatSelectionPage() {
           totalAmount
         );
 
-        alert(
-          "Booking Successful"
-        );
+        toast.success("Booking Successful");
+         
 
-        navigate("/");
+        navigate("/my-bookings");
       } catch (error) {
-        alert(
+        toast.error(
           error.response?.data
             ?.message ||
             "Booking Failed"

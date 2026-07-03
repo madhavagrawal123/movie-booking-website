@@ -8,10 +8,26 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import SeatSelectionPage from "./pages/SeatSelectionPage.jsx"
 import MyBookings from "./pages/MyBookings.jsx"
 import WishlistPage from "./pages/WishlistPage.jsx"
+import OwnerDashboard from "./pages1/OwnerDashboard";
+import OwnerProtectedRoute from "./components1/OwnerProtectedRoute";
+import OwnerLayout from "./components1/OwnerLayout";
+import ThreatreList from "./pages1/TheatreList";
+import CreateTheatre from "./pages1/CreateTheatre";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "./toast.css";
+import TheatreDetails from "./pages1/TheatreDetails.jsx";
+import ScreenList from "./pages1/ScreenList.jsx"
+import CreateScreen from "./pages1/CreateScreen.jsx"
 
 function App() {
   return (
     <BrowserRouter>
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+          hideProgressBar={false}
+      />
       <Routes>
         <Route path="/" element={<Home />} />
 
@@ -47,7 +63,37 @@ function App() {
   </ProtectedRoute>
   }
 />
-       
+       <Route
+    path="/owner"
+    element={
+        <OwnerProtectedRoute>
+            <OwnerLayout />
+        </OwnerProtectedRoute>
+    }
+>
+    <Route index element={<OwnerDashboard />} />
+    <Route path="theatres" element={<ThreatreList />} />
+    <Route
+    path="theatres/create"
+    element={<CreateTheatre />}
+/>
+
+<Route
+    path="theatres/:theatreId"
+    element={<TheatreDetails />}
+/>
+<Route
+    path="theatres/:theatreId/screens"
+    element={<ScreenList />}
+/>
+<Route
+    path="theatres/:theatreId/screens/create"
+    element={<CreateScreen />}
+/>
+</Route>
+
+
+       {/* <Route path="/owner" element={<OwnerDashboard />} /> */}
 <Route
     path="/wishlist"
     element={

@@ -4,6 +4,90 @@ const Show = require("../models/show.model");
 const ShowSeat = require("../models/availablityseat.model");
 const mongoose = require("mongoose");
 
+
+async function getMyTheatres(req, res) {
+    try {
+        const theatres = await Threatre.find({
+            owner: req.user.id
+        });
+
+        res.status(200).json(theatres);
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
+}
+async function getTheatreById(req, res) {
+    try {
+
+        const { theatreId } = req.params;
+
+        const theatre = await Threatre.findById(theatreId);
+
+        if (!theatre) {
+            return res.status(404).json({
+                message: "Theatre not found"
+            });
+        }
+
+        const screens = await Screen.find({ theatreId });
+
+        res.status(200).json({
+            theatre,
+            screens
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message
+        });
+
+    }
+}
+async function getScreens(req, res) {
+  try {
+    const { theatreId } = req.params;
+
+    const screens = await Screen.find({
+        theatreId
+    });
+
+    res.json(screens);}
+    catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
+}
+async function getShows(req, res) {
+    try{
+    const { screenId } = req.params;    
+
+    const shows = await Show.find({
+        screenId
+    });
+    if (!screen) {
+    return res.status(404).json({
+        message: "Screen not found"
+    });
+}
+
+if (screen.theatre.owner.toString() !== req.user.id) {
+    return res.status(403).json({
+        message: "Access denied"
+    });
+}
+    res.json(shows);
+} catch(error){
+     res.status(500).json({
+            message: error.message
+        });
+}
+}
+
 async function createTheatre(req, res) {
     try {
         const { name, city, address } = req.body;
@@ -57,22 +141,75 @@ async function updateTheatre(req, res) {
     }
 }
 async function deleteTheatre(req, res) {
+    const session = await mongoose.startSession();
+
     try {
-        const { theatreId } = req.params;   
-        const theatre = await Threatre.findById(theatreId);
+        session.startTransaction();
+
+        const { theatreId } = req.params;
+
+        const theatre = await Threatre.findById(theatreId).session(session);
+
         if (!theatre) {
-            return res.status(404).json({ message: "Theatre not found" });
+            await session.abortTransaction();
+            session.endSession();
+
+            return res.status(404).json({
+                message: "Theatre not found"
+            });
         }
+
         if (theatre.owner.toString() !== req.user.id) {
-            return res.status(403).json({ message: "Access denied" });
+            await session.abortTransaction();
+            session.endSession();
+
+            return res.status(403).json({
+                message: "Access denied"
+            });
         }
-         await Threatre.findByIdAndDelete(theatreId);
+
+        // Get all screens
+        const screens = await Screen.find({
+            theatre: theatreId
+        }).session(session);
+
+        const screenIds = screens.map(screen => screen._id);
+
+        // Get all shows
+        const shows = await Show.find({
+            screen: { $in: screenIds }
+        }).session(session);
+
+        const showIds = shows.map(show => show._id);
+
+        // Delete ShowSeats
+        await ShowSeat.deleteMany({
+            show: { $in: showIds }
+        }).session(session);
+
+        // Delete Shows
+        await Show.deleteMany({
+            screen: { $in: screenIds }
+        }).session(session);
+
+        // Delete Screens
+        await Screen.deleteMany({
+            theatre: theatreId
+        }).session(session);
+
+        // Delete Theatre
+        await Threatre.findByIdAndDelete(theatreId).session(session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         res.status(200).json({
-            message: "Theatre deleted successfully"
+            message: "Theatre and all related data deleted successfully"
         });
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
 
         res.status(500).json({
             message: error.message
@@ -83,8 +220,7 @@ async function deleteTheatre(req, res) {
  
 async function createScreen(req, res) {
     try {      
-        console.log("Controller running");
-console.log(req.theatre);  
+         
        const {
         
         screenName,
@@ -92,7 +228,16 @@ console.log(req.theatre);
         seatsPerRow
     } = req.body;
     const { theatreId } = req.params;
-    console.log(req.body);
+    const existingScreen = await Screen.findOne({
+    theatreId,
+    screenName,
+});
+
+if (existingScreen) {
+    return res.status(400).json({
+        message: "Screen already exists in this theatre",
+    });
+}
     if (!screenName || !rows || !seatsPerRow) {
         return res.status(400).json({
             message: "All fields are required"
@@ -154,25 +299,58 @@ async function updateScreen(req, res) {
     }
 }
 async function deleteScreen(req, res) {
+    const session = await mongoose.startSession();
+
     try {
         const { screenId } = req.params;
-        const screen = await Screen.findById(screenId);
-        if(!screen) {
-            return res.status(404).json({
-                message: "Screen not found"
-            });
-        }
-        const screendel = await Screen.findByIdAndDelete(screenId);
 
+        await session.withTransaction(async () => {
+
+            const screen = await Screen.findById(screenId).session(session);
+
+            if (!screen) {
+                throw new Error("Screen not found");
+            }
+
+            // Get all shows of this screen
+            const shows = await Show.find({
+                screen: screenId
+            }).session(session);
+
+            const showIds = shows.map(show => show._id);
+
+            // Delete all ShowSeats
+            await ShowSeat.deleteMany({
+                show: { $in: showIds }
+            }).session(session);
+
+            // Delete all Shows
+            await Show.deleteMany({
+                screen: screenId
+            }).session(session);
+
+            // Delete Screen
+            await Screen.findByIdAndDelete(screenId).session(session);
+        });
 
         res.status(200).json({
-            message: "Screen deleted successfully",
-            screendel
+            message: "Screen and all related data deleted successfully"
         });
+
     } catch (error) {
+
+        if (error.message === "Screen not found") {
+            return res.status(404).json({
+                message: error.message
+            });
+        }
+
         res.status(500).json({
             message: error.message
         });
+
+    } finally {
+        session.endSession();
     }
 }
 
@@ -277,33 +455,81 @@ show.showTime = time || show.showTime;
         });
     }
 }
-async function deleteShow(req, res) {  
+async function deleteShow(req, res) {
+    const session = await mongoose.startSession();
+
     try {
         const { showId } = req.params;
-        const show = await Show.findById(showId);
-        if(!show) {
+
+        await session.withTransaction(async () => {
+
+            const show = await Show.findById(showId).session(session);
+
+            if (!show) {
+                throw new Error("Show not found");
+            }
+
+            // Delete all seats for this show
+            await ShowSeat.deleteMany({
+                show: showId
+            }).session(session);
+
+            // Delete the show
+            await Show.findByIdAndDelete(showId).session(session);
+        });
+
+        res.status(200).json({
+            message: "Show and all related data deleted successfully"
+        });
+
+    } catch (error) {
+
+        if (error.message === "Show not found") {
             return res.status(404).json({
-                message: "Show not found"
+                message: error.message
             });
         }
-          await ShowSeat.deleteMany({showId})
 
-        const showdel = await Show.findByIdAndDelete(showId);
-      
-        res.status(200).json({
-            message: "Show deleted successfully",
-            showdel
-        });
-    } catch (error) {
         res.status(500).json({
             message: error.message
         });
+
+    } finally {
+        session.endSession();
     }
 }
+const getScreenById = async (req, res) => {
+    try {
+        const { screenId } = req.params;
 
+        const screen = await Screen.findById(screenId)
+            .populate("theatreId");
 
+        if (!screen) {
+            return res.status(404).json({
+                success: false,
+                message: "Screen not found"
+            });
+        }
 
+        res.status(200).json({
+            success: true,
+            screen
+        });
+
+    } catch (error) {
+        console.error("Error fetching screen:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
 module.exports = {
+    getMyTheatres,
+    getScreens,
+    getShows,
     createTheatre,
     updateTheatre,
     deleteTheatre,
@@ -312,7 +538,9 @@ module.exports = {
     deleteScreen,
     createShow,
     updateShow,
-    deleteShow
+    deleteShow,
+    getTheatreById,
+    getScreenById
 
 };  
 

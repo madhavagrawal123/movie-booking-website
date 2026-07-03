@@ -1,8 +1,15 @@
 const express = require('express');
 const authController = require("../controllers/auth.controller");
-const { auth, authorize,theatreOwnerCheck } = require("../middlewares/auth.middleware");
+const { auth, authorize,theatreOwnerCheck,showOwnerCheck,} = require("../middlewares/auth.middleware");
 const buildController = require("../controllers/build.controller");
 const router = express.Router();
+
+//GET APIs
+router.get('/mytheatres',auth,authorize("owner"), buildController.getMyTheatres);
+router.get('/theatre/:theatreId', auth, authorize("owner"), theatreOwnerCheck, buildController.getTheatreById);
+router.get('/screens/:theatreId', auth, authorize("owner"), theatreOwnerCheck, buildController.getScreens);
+router.get("/screens/:theatreId/:screenId", auth, authorize("owner"), theatreOwnerCheck, buildController.getScreenById);
+router.get('/show/:screenId', auth, authorize("owner"),  buildController.getShows);
 
 
 // build APIs
@@ -13,6 +20,7 @@ router.post('/createscreen/:theatreId', auth, authorize("owner"),theatreOwnerChe
 router.put('/updatescreen/:theatreId/:screenId', auth, authorize("owner"), theatreOwnerCheck, buildController.updateScreen);
 router.delete('/deletescreen/:theatreId/:screenId', auth, authorize("owner"), theatreOwnerCheck, buildController.deleteScreen);
 router.post('/createshow/:theatreId/:screenId', auth, authorize("owner"), theatreOwnerCheck, buildController.createShow);
-router.put('/updateshow/:showId', auth, authorize("owner"), buildController.updateShow);
-router.delete('/deleteshow/:showId', auth, authorize("owner"), theatreOwnerCheck, buildController.deleteShow);
+router.put('/updateshow/:showId', auth, authorize("owner"),showOwnerCheck, buildController.updateShow);
+router.delete('/deleteshow/:showId', auth, authorize("owner"), showOwnerCheck, buildController.deleteShow);
 module.exports = router;
+

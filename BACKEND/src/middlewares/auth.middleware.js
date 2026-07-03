@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Theatre = require("../models/theatre.model");
+const Show = require("../models/show.model")
 
 
 async function auth(req, res, next) {
@@ -45,7 +46,28 @@ function authorize(...roles) {
     };
 }
 
+async function showOwnerCheck(req, res, next) {
+    const { showId } = req.params;
 
+    const show = await Show.findById(showId);
+
+    if (!show) {
+        return res.status(404).json({
+            message: "Show not found"
+        });
+    }
+
+    const theatre = await Theatre.findById(show.theatreId);
+
+    if (theatre.owner.toString() !== req.user.id) {
+        return res.status(403).json({
+            message: "Access denied"
+        });
+    }
+
+    req.show = show;
+    next();
+}
 
 async function theatreOwnerCheck(req, res, next) {
     try {
@@ -90,5 +112,6 @@ async function theatreOwnerCheck(req, res, next) {
 module.exports = {
     auth,
     authorize,
-    theatreOwnerCheck
+    theatreOwnerCheck,  
+      showOwnerCheck,
 };

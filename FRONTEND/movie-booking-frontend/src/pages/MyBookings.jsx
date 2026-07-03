@@ -4,6 +4,8 @@ import Navbar from "../components/Navbar";
 
 import { getBookingHistory, cancelBooking } from "../services/bookingService";
 
+import { toast } from "react-toastify";
+
 function MyBookings() {
 
     const [bookings, setBookings] = useState([]);
@@ -40,13 +42,13 @@ function MyBookings() {
             const response =
                 await cancelBooking(bookingId);
 
-            alert(response.data.message);
+            toast.success(response.data.message);
 
             fetchBookings();
 
         } catch (error) {
 
-            alert(
+            toast.error(
                 error.response?.data?.message ||
                 "Failed to cancel booking"
             );

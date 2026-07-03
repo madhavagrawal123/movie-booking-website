@@ -3,6 +3,7 @@ import { useNavigate, Link,useLocation } from "react-router-dom";
 
 import { loginUser } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 function Login() {
     const location = useLocation();
@@ -30,16 +31,26 @@ const redirectTo = location.state?.redirectTo || "/";
     e.preventDefault();
 
     try {
-      const response =
-        await loginUser(formData);
+      const response = await loginUser(formData);
+      
+      
+      const user = response.data.user; 
+      login(user);
+      toast.success("Login successful!");
 
-      login(response.data.user);
+      
+      if (user?.role === "owner") {
+        navigate("/owner");
+      } else {
+        
+        const redirectTo = location.state?.redirectTo || "/";
+        navigate(redirectTo);
+      }
 
-     navigate(redirectTo);
     } catch (error) {
-      alert(
-        error.response?.data?.message
-      );
+     toast.error(
+  error.response?.data?.message || "An error occurred during login."
+);
     }
   };
 

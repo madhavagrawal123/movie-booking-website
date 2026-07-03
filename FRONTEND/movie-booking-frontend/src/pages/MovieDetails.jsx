@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams,useNavigate  } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "react-toastify";
 import {
     toggleWishlist,
     checkWishlist,
@@ -13,7 +14,9 @@ function MovieDetails() {
   const { id } = useParams();
    const { user } = useAuth();
   const navigate = useNavigate();
-  const [movie, setMovie] = useState(null);
+ const [movie, setMovie] =useState(null);
+const [loading, setLoading] = useState(true);
+
   const [inWishlist, setInWishlist] =
     useState(false);
 
@@ -46,13 +49,17 @@ const fetchWishlistStatus =
 
     };
   const fetchMovie = async () => {
+   
     try {
+       setLoading(true);
       const response =
         await getMovieDetails(id);
 
       setMovie(response.data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -69,12 +76,17 @@ const fetchWishlistStatus =
   navigate(`/booking/${movie.id}`);
 };
 
-  if (!movie)
+  if (loading) {
     return (
-      <div className="text-white">
-        Loading...
-      </div>
+        <div className="bg-zinc-950 min-h-screen">
+            <Navbar />
+
+            <div className="flex justify-center items-center h-[80vh]">
+                <div className="w-14 h-14 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
     );
+}
   
     const handleWishlist =
     async () => {
@@ -95,7 +107,11 @@ const fetchWishlistStatus =
                         movie.release_date,
                 }
             );
-
+             if (inWishlist) {
+            toast.success("Removed from wishlist");
+        } else {
+            toast.success("Added to wishlist");
+        }
             setInWishlist(
                 !inWishlist
             );
@@ -103,6 +119,10 @@ const fetchWishlistStatus =
         } catch (error) {
 
             console.log(error);
+             if (error.response?.status === 401) {
+        navigate("/login");
+
+    }
 
         }
 
