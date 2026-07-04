@@ -104,9 +104,30 @@ if (error.response) {
 }
     }
 }
+async function searchMovies(req, res) {
+    try {
+        const { query } = req.query;
+
+        const response = await axios.get(
+            "https://api.themoviedb.org/3/search/movie",
+            {
+                params: {
+                    api_key: process.env.TMDB_API_KEY,
+                    query,
+                },
+            }
+        );
+
+        res.json(response.data.results);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+        console.error("Error searching movies:", err.message);
+    }
+}
 module.exports = {
     getPopularMovies,
     getTopRatedMovies,
     getUpcomingMovies,
-    getMovieDetails
+    getMovieDetails,
+    searchMovies
 }

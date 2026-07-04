@@ -4,6 +4,44 @@ const Show = require("../models/show.model");
 const ShowSeat = require("../models/availablityseat.model");
 const mongoose = require("mongoose");
 
+async function getDashboard(req, res) {
+    try {
+
+        const ownerId = req.user.id;
+
+        const theatres = await Threatre.find(
+            { owner: ownerId },
+            "_id"
+        );
+
+        const theatreIds = theatres.map(
+            theatre => theatre._id
+        );
+
+        const theatreCount = theatreIds.length;
+
+        const screenCount = await Screen.countDocuments({
+            theatreId: { $in: theatreIds }
+        });
+
+        const showCount = await Show.countDocuments({
+            theatreId: { $in: theatreIds }
+        });
+
+        res.status(200).json({
+            theatres: theatreCount,
+            screens: screenCount,
+            shows: showCount
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message
+        });
+
+    }
+}
 
 async function getMyTheatres(req, res) {
     try {
@@ -66,21 +104,23 @@ async function getShows(req, res) {
     try{
     const { screenId } = req.params;    
 
-    const shows = await Show.find({
-        screenId
-    });
-    if (!screen) {
+    const shows = await Show.find({ screenId });
+
+const screen = await Screen.findById(screenId).populate("theatreId");
+
+if (!screen) {
     return res.status(404).json({
         message: "Screen not found"
     });
 }
 
-if (screen.theatre.owner.toString() !== req.user.id) {
+if (screen.theatreId.owner.toString() !== req.user.id) {
     return res.status(403).json({
         message: "Access denied"
     });
 }
-    res.json(shows);
+
+res.json(shows);
 } catch(error){
      res.status(500).json({
             message: error.message
@@ -526,6 +566,28 @@ const getScreenById = async (req, res) => {
         });
     }
 };
+async function getShowById(req, res) {
+    try {
+        const { showId } = req.params;
+        const show = await Show.findById(showId);
+        if (!show) {
+            return res.status(404).json({
+                success: false,
+                message: "Show not found"
+            });
+        }
+        res.status(200).json({
+            success: true,
+            show
+        });
+    } catch (error) {
+        console.error("Error fetching show:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+}
 module.exports = {
     getMyTheatres,
     getScreens,
@@ -540,7 +602,9 @@ module.exports = {
     updateShow,
     deleteShow,
     getTheatreById,
-    getScreenById
+    getScreenById,
+    getShowById,
+    getDashboard
 
 };  
 

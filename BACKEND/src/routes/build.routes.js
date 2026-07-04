@@ -9,7 +9,9 @@ router.get('/mytheatres',auth,authorize("owner"), buildController.getMyTheatres)
 router.get('/theatre/:theatreId', auth, authorize("owner"), theatreOwnerCheck, buildController.getTheatreById);
 router.get('/screens/:theatreId', auth, authorize("owner"), theatreOwnerCheck, buildController.getScreens);
 router.get("/screens/:theatreId/:screenId", auth, authorize("owner"), theatreOwnerCheck, buildController.getScreenById);
-router.get('/show/:screenId', auth, authorize("owner"),  buildController.getShows);
+router.get('/shows/:screenId', auth, authorize("owner"),  buildController.getShows);
+router.get('/show/:showId', auth, authorize("owner"), showOwnerCheck, buildController.getShowById);
+router.get('/dashboard', auth, authorize("owner"), buildController.getDashboard);
 
 
 // build APIs

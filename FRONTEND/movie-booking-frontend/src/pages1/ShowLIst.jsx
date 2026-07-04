@@ -1,29 +1,28 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getScreens } from "../services1/screenService";
+import { getShows } from "../services1/showService";
 
-function ScreenList() {
-    
+function ShowList() {
 
-    const { theatreId } = useParams();
+    const { theatreId, screenId } = useParams();
 
     const navigate = useNavigate();
 
-    const [screens, setScreens] = useState([]);
+    const [shows, setShows] = useState([]);
 
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchScreens();
+        fetchShows();
     }, []);
 
-    async function fetchScreens() {
+    async function fetchShows() {
 
         try {
 
-            const response = await getScreens(theatreId);
-            
-            setScreens(response.data);
+            const response = await getShows(screenId);
+
+            setShows(response.data);
 
         } catch (error) {
 
@@ -40,7 +39,7 @@ function ScreenList() {
     if (loading) {
 
         return (
-           <div className="flex justify-center items-center h-[80vh]">
+            <div className="flex justify-center items-center h-[80vh]">
                 <div className="w-14 h-14 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
@@ -62,24 +61,24 @@ function ScreenList() {
 
                 <button
                     onClick={() =>
-                        navigate(`/owner/theatres/${theatreId}/screens/create`)
+                        navigate(`/owner/theatres/${theatreId}/screens/${screenId}/shows/search`)
                     }
                     className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
                 >
-                    + Create Screen
+                    + Create Show
                 </button>
 
             </div>
 
             <h1 className="text-4xl font-bold text-red-500 mb-8">
 
-                Manage Screens
+                Manage Shows
 
             </h1>
 
             {
 
-                screens.length === 0 ?
+                shows.length === 0 ?
 
                     (
 
@@ -87,13 +86,13 @@ function ScreenList() {
 
                             <h2 className="text-2xl text-white mb-3">
 
-                                No Screens Found
+                                No Shows Found
 
                             </h2>
 
                             <p className="text-gray-400">
 
-                                Click "Create Screen" to add your first screen.
+                                Click "Create Show" to add your first show.
 
                             </p>
 
@@ -109,19 +108,19 @@ function ScreenList() {
 
                             {
 
-                                screens.map((screen) => (
+                                shows.map((show) => (
 
                                     <div
-                                        key={screen._id}
+                                        key={show._id}
                                         onClick={() =>
-                                            navigate(`/owner/screens/${theatreId}/${screen._id}`)
+                                            navigate(`/owner/shows/${show._id}`)
                                         }
                                         className="cursor-pointer bg-zinc-900 border border-red-700 rounded-xl p-6 hover:border-red-500 hover:scale-[1.02] transition-all duration-300"
                                     >
-
+                                        
                                         <h2 className="text-2xl font-bold text-white mb-4">
 
-                                            {screen.screenName}
+                                            {show.movieTitle}
 
                                         </h2>
 
@@ -131,13 +130,13 @@ function ScreenList() {
 
                                                 <span className="font-semibold text-red-500">
 
-                                                    Rows :
+                                                    Date :
 
                                                 </span>
 
                                                 {" "}
 
-                                                {screen.rows}
+                                                {new Date(show.showDate).toLocaleDateString()}
 
                                             </p>
 
@@ -145,13 +144,13 @@ function ScreenList() {
 
                                                 <span className="font-semibold text-red-500">
 
-                                                    Seats / Row :
+                                                    Time :
 
                                                 </span>
 
                                                 {" "}
 
-                                                {screen.seatsPerRow}
+                                                {"200"}
 
                                             </p>
 
@@ -159,13 +158,13 @@ function ScreenList() {
 
                                                 <span className="font-semibold text-red-500">
 
-                                                    Total Seats :
+                                                    Price :
 
                                                 </span>
 
                                                 {" "}
 
-                                                {screen.rows * screen.seatsPerRow}
+                                                ₹{show.ticketPrice}
 
                                             </p>
 
@@ -189,4 +188,4 @@ function ScreenList() {
 
 }
 
-export default ScreenList;
+export default ShowList;

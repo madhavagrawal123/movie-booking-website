@@ -14,3 +14,5 @@ export const getUpcomingMovies = () =>
     API.get("/movies/upcoming");
 export const getMovieDetails = (id) =>
   API.get(`/movies/movie/${id}`);
+export const searchMovies = (query) =>
+    API.get(`/movies/search?query=${query}`);

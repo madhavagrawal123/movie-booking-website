@@ -12,5 +12,9 @@ router.get('/popular', movieController.getPopularMovies);
 router.get('/top-rated', movieController.getTopRatedMovies);
 router.get('/upcoming', movieController.getUpcomingMovies);
 router.get('/movie/:id', movieController.getMovieDetails);  
+router.get('/search', movieController.searchMovies); 
+router.get("/test", (req, res) => {
+    res.send("Search route file is working");
+});
 
 module.exports = router;

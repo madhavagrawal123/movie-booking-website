@@ -19,6 +19,11 @@ import "./toast.css";
 import TheatreDetails from "./pages1/TheatreDetails.jsx";
 import ScreenList from "./pages1/ScreenList.jsx"
 import CreateScreen from "./pages1/CreateScreen.jsx"
+import ScreenDetails from "./pages1/ScreenDetails.jsx"
+import ShowList from "./pages1/ShowLIst.jsx"
+import MovieSearch from "./pages1/MovieSearch.jsx"
+import CreateShow from "./pages1/CreateShow.jsx"
+import ShowDetails from "./pages1/ShowDetails.jsx"
 
 function App() {
   return (
@@ -90,6 +95,28 @@ function App() {
     path="theatres/:theatreId/screens/create"
     element={<CreateScreen />}
 />
+<Route
+    path="screens/:theatreId/:screenId"
+    element={<ScreenDetails />}
+/>
+<Route
+    path="theatres/:theatreId/screens/:screenId/shows"
+    element={<ShowList />}
+
+/>
+<Route 
+    path="theatres/:theatreId/screens/:screenId/shows/search"
+    element={<MovieSearch />}
+/>
+<Route
+    path="theatres/:theatreId/screens/:screenId/shows/create"
+    element={<CreateShow />}
+/>
+<Route
+    path="shows/:showId"
+    element={<ShowDetails />}
+/>
+
 </Route>
 
 

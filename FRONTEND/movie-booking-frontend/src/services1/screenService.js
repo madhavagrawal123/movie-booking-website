@@ -29,5 +29,5 @@ export const deleteScreen = (
         `/build/deletescreen/${theatreId}/${screenId}`
     );
 
-export const getScreenById = (screenId) =>
-    API.get(`/screen/${screenId}`);
+export const getScreenById = (theatreId, screenId) =>
+    API.get(`/build/screens/${theatreId}/${screenId}`);

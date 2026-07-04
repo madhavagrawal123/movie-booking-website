@@ -14,3 +14,5 @@ export const loginUser = (data) =>
 export const logoutUser = () =>
   API.post("/auth/user/logout");
 
+export const getDashboard = () =>
+  API.get("/build/dashboard");
