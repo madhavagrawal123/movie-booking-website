@@ -4,7 +4,7 @@ let io;
 function init(server) {
     io = new Server(server, {
         cors: {
-            origin: "http://localhost:5173",
+            origin: process.env.CLIENT_URL || "http://localhost:5173",
             credentials: true,
         },
     });

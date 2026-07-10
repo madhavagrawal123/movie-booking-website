@@ -144,7 +144,7 @@ function SeatSelectionPage() {
 
       // Create Razorpay order
       const { data } = await axios.post(
-        "http://localhost:3000/api/payment/create-order",
+        `${import.meta.env.VITE_API_URL}/api/payment/create-order`,
         {
           showId,
           seatNumbers: selectedSeats,
@@ -168,7 +168,7 @@ function SeatSelectionPage() {
           try {
             // Verify payment with backend
             const verifyRes = await axios.post(
-              "http://localhost:3000/api/payment/verify-payment",
+              `${import.meta.env.VITE_API_URL}/api/payment/verify-payment`,
               {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
