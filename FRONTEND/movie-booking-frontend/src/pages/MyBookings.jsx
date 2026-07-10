@@ -20,8 +20,9 @@ function MyBookings() {
 
             const response =
                 await getBookingHistory();
-
+            console.log(response.data.bookings);
             setBookings(response.data.bookings);
+            console.log(bookings);
 
         } catch (error) {
 
@@ -56,6 +57,7 @@ function MyBookings() {
         }
     };
 
+    
     return (
 
         <div className="bg-zinc-950 min-h-screen text-white">

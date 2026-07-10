@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { createShow } from "../services1/showService";
@@ -61,7 +61,7 @@ useEffect(() => {
             toast.success("Show created successfully!");
 
             navigate(
-                `/theatres/${theatreId}/screens/${screenId}/shows`
+                `owner/theatres/${theatreId}/screens/${screenId}/shows`
             );
 
         } catch (error) {

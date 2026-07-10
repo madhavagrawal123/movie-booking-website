@@ -66,3 +66,15 @@ export const checkWishlist = (
     API.get(
         `/book/wishlist/check/${movieId}`
     );
+
+export const releaseSeats = (
+  showId,
+  seatNumbers
+) =>
+  API.post(
+    `/book/release-seats/${showId}`,
+    { seatNumbers },
+    {
+      withCredentials: true,
+    }
+  );

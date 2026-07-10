@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
+import socket from "../socket";
 import Navbar from "../components/Navbar";
 import { toast } from "react-toastify";
 import {
@@ -8,7 +8,8 @@ import {
   holdSeats,
   confirmBooking,
 } from "../services/bookingService";
-
+import axios from "axios";
+import { releaseSeats } from "../services/bookingService";
 function SeatSelectionPage() {
   const { showId } = useParams();
   console.log("showId:", showId);
@@ -26,8 +27,81 @@ function SeatSelectionPage() {
     fetchSeats();
   }, []);
 
+  useEffect(() => {
+    const joinRoom = () => {
+      console.log("Connected:", socket.id);
+
+      socket.emit("joinShow", showId);
+    };
+
+    if (socket.connected) {
+      joinRoom();
+    }
+
+    socket.on("connect", joinRoom);
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected");
+    });
+
+    socket.on("bookingConfirmed", ({ showId: updatedShowId, seats: bookedSeats }) => {
+
+      if (updatedShowId !== showId) return;
+
+      setSeats((prevSeats) =>
+        prevSeats.map((seat) =>
+          bookedSeats.includes(seat.seatNumber)
+            ? { ...seat, status: "booked" }
+            : seat
+        )
+      );
+
+
+      setSelectedSeats((prevSelected) =>
+        prevSelected.filter(
+          (seatNumber) => !bookedSeats.includes(seatNumber)
+        )
+      );
+    });
+
+    socket.on("seatsHeld", ({ showId: updatedShowId, seats: heldSeats }) => {
+
+      if (updatedShowId !== showId) return;
+
+      setSeats(prev =>
+        prev.map(seat =>
+          heldSeats.includes(seat.seatNumber)
+            ? { ...seat, status: "held" }
+            : seat
+        )
+      );
+    });
+
+    socket.on("seatsReleased", ({ showId: updatedShowId, seats: releasedSeats }) => {
+      console.log("Received seatsReleased", updatedShowId, releasedSeats);
+      if (updatedShowId !== showId) return;
+       
+      setSeats(prev =>
+        prev.map(seat =>
+          releasedSeats.includes(seat.seatNumber)
+            ? { ...seat, status: "available" }
+            : seat
+        )
+      );
+    });
+
+    return () => {
+      socket.off("connect", joinRoom);
+      socket.off("disconnect");
+      socket.off("bookingConfirmed");
+      socket.off("seatsHeld");
+      socket.off("seatsReleased");
+    };
+  }, [showId]);
+
   const fetchSeats = async () => {
     try {
+
       const response =
         await getShowSeats(showId);
 
@@ -61,36 +135,115 @@ function SeatSelectionPage() {
     }
   };
 
-  const handleBooking =
-    async () => {
-      try {
-        await holdSeats(
+  const handleBooking = async () => {
+    try {
+      // Hold the selected seats
+      await holdSeats(showId, selectedSeats);
+
+      const totalAmount = selectedSeats.length * seatPrice;
+
+      // Create Razorpay order
+      const { data } = await axios.post(
+        "http://localhost:3000/api/payment/create-order",
+        {
           showId,
-          selectedSeats
-        );
+          seatNumbers: selectedSeats,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
-        const totalAmount =
-          selectedSeats.length *
-          seatPrice;
+      const order = data.order;
 
-        await confirmBooking(
-          showId,
-          selectedSeats,
-          totalAmount
-        );
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        name: "Movie Booking",
+        description: "Seat Booking",
 
-        toast.success("Booking Successful");
-         
+        handler: async function (response) {
+          try {
+            // Verify payment with backend
+            const verifyRes = await axios.post(
+              "http://localhost:3000/api/payment/verify-payment",
+              {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+              {
+                withCredentials: true,
+              }
+            );
 
-        navigate("/my-bookings");
-      } catch (error) {
-        toast.error(
-          error.response?.data
-            ?.message ||
-            "Booking Failed"
-        );
-      }
-    };
+            if (!verifyRes.data.success) {
+              await releaseSeats(
+                showId,
+                selectedSeats
+              );
+
+              toast.error("Payment Verification Failed");
+              return;
+            }
+
+            // Payment verified, now confirm booking
+            await confirmBooking(
+              showId,
+              selectedSeats,
+              totalAmount
+            );
+
+            toast.success("Booking Successful");
+
+            navigate("/my-bookings");
+          } catch (error) {
+            console.error(error);
+            await releaseSeats(
+              showId,
+              selectedSeats
+            );
+            toast.error(
+              error.response?.data?.message ||
+              "Payment Verification Failed"
+            );
+          }
+        },
+
+        modal: {
+          ondismiss: async () => {
+            try {
+              await releaseSeats(
+                showId,
+                selectedSeats
+              );
+
+              toast.info("Payment Cancelled");
+
+            } catch (err) {
+              console.error(err);
+            }
+          },
+        },
+
+        theme: {
+          color: "#3399cc",
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        error.response?.data?.message ||
+        "Booking Failed"
+      );
+    }
+  };
 
   const groupedSeats = {};
 
@@ -110,7 +263,7 @@ function SeatSelectionPage() {
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <h1 className= "text-4xl font-bold text-center mb-12">
+        <h1 className="text-4xl font-bold text-center mb-12">
           Select Seats
         </h1>
 
@@ -168,13 +321,13 @@ function SeatSelectionPage() {
                       h-10
                       rounded
 
-                      ${
-                        seat.status ===
-                        "booked"
-                          ? "bg-red-500 cursor-not-allowed"
+                      ${seat.status === "booked"
+                        ? "bg-red-500 cursor-not-allowed"
+                        : seat.status === "held"
+                          ? "bg-yellow-500 cursor-not-allowed"
                           : isSelected
-                          ? "bg-green-500"
-                          : "border border-green-500"
+                            ? "bg-green-500"
+                            : "border border-green-500"
                       }
                     `}
                   >
