@@ -10,9 +10,9 @@ router.post('/holdSeats/:showId', auth, bookController.holdSeats);
 router.post('/confirmBooking/:showId', auth, bookController.confirmBooking);
 router.post('/cancelBooking/:bookingId', auth, bookController.cancelBooking);
 router.post('/saveBooking/:showId', auth, bookController.saveBooking);
-router.get('/wishlist',bookController.getWishlist);
-router.get('/wishlist/check/:tmdbMovieId',bookController.checkWishlist)
-router.post('/wishlist/:tmdbMovieId', bookController.wishlistcontroller);
+router.get('/wishlist',auth,bookController.getWishlist);
+router.get('/wishlist/check/:tmdbMovieId',auth,bookController.checkWishlist)
+router.post('/wishlist/:tmdbMovieId', auth, bookController.wishlistcontroller);
 router.get("/history",auth,bookController.getBookingHistory);
 router.post('/createReview/:tmdbMovieId', auth, bookController.createReview);
 router.get('/getReview/:userId/:tmdbMovieId',  bookController.getReview);
