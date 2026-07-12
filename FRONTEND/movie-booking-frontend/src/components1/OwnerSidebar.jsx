@@ -19,7 +19,7 @@ function OwnerSidebar() {
 
             <div className="p-6 border-b border-red-700">
                 <h1 className="text-2xl font-bold text-red-500">
-                    🎬 CineAdmin
+                    🎬 Showly
                 </h1>
             </div>
 

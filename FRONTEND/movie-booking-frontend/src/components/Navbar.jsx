@@ -28,7 +28,7 @@ function Navbar() {
                     to="/"
                     className="text-red-500 text-2xl font-bold"
                 >
-                    MovieHub
+                    Showly
                 </Link>
                 <span className="text-white">
                     {user?.name}

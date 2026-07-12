@@ -287,40 +287,60 @@ io.to(showId).emit("seatsReleased", {
 }
 
 async function releaseExpiredSeats(showId) {
-  console.log("Releasing expired seats for showId:", showId);
-  
-  const result = await ShowSeat.updateMany(
-        {
-            showId,
-            status: "held",
-            heldUntil: {
-                $lt: new Date(),
-            },
-        },
-        {
-            $set: {
-                status: "available",
-                heldBy: null,
-                holdExpiresAt: null,
-            },
-        }
-    );
-    
+  const expiredSeats = await ShowSeat.find({
+    showId,
+    status: "held",
+    heldUntil: { $lt: new Date() },
+  });
+
+  if (expiredSeats.length === 0) {
+    return [];
+  }
+
+  const seatNumbers = expiredSeats.map((seat) => seat.seatNumber);
+
+  await ShowSeat.updateMany(
+    {
+      showId,
+      status: "held",
+      heldUntil: { $lt: new Date() },
+    },
+    {
+      $set: {
+        status: "available",
+        heldBy: null,
+        heldUntil: null,
+      },
+    }
+  );
+
+  return seatNumbers;
 }
 
 async function getShowSeats(req, res) {
   try {
     const { showId } = req.params;
-    await releaseExpiredSeats(showId);
+
+    const releasedSeats = await releaseExpiredSeats(showId);
+
+    if (releasedSeats.length > 0) {
+      const io = getIO();
+
+      io.to(showId.toString()).emit("seatsReleased", {
+        showId,
+        seats: releasedSeats,
+      });
+    }
+
     const seats = await ShowSeat.find({ showId });
+
     res.status(200).json(seats);
   } catch (error) {
     console.error("Error fetching show seats:", error);
+
     res.status(500).json({
-      error: error.message
+      error: error.message,
     });
-
-
   }
 }
 async function saveBooking(req, res) {
