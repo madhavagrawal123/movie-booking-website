@@ -7,7 +7,9 @@ async function auth(req, res, next) {
     try {
 
         const token = req.cookies.token;
-
+        console.log("URL:", req.originalUrl);
+console.log("Cookies:", req.cookies);
+console.log("Token:", token);
         if (!token) {
             return res.status(401).json({
                 message: "Please login first"
