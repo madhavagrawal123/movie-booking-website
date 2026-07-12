@@ -578,7 +578,10 @@ async function checkWishlist(req, res) {
     const userId = req.user.id;
 
     const { tmdbMovieId } = req.params;
-
+    console.log("req.user =", req.user);
+console.log("req.params =", req.params);
+console.log("userId =", userId);
+console.log("tmdbMovieId =", tmdbMovieId);
     const exists = await Wishlist.findOne({
       userId,
       tmdbMovieId
