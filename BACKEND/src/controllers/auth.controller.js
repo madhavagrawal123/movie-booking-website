@@ -39,7 +39,7 @@ async function registerUser(req, res) {
         }
     })
 }
-// make login controller like that
+
 async function loginUser(req, res) {
     const { email, password } = req.body;   
     if(!email || !password) {
