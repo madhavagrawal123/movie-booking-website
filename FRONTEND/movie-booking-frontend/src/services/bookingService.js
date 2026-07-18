@@ -51,6 +51,9 @@ export const cancelBooking = (bookingId) =>
 export const getWishlist = () =>
     API.get("/book/wishlist");
 
+export const getdates = (movieId,city) =>
+   API.get(`/book/available-dates/${movieId}?city=${city}`)
+
 export const toggleWishlist = (
     movieId,
     movieData

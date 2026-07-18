@@ -4,11 +4,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 import { getMovieDetails } from "../services/movieService";
-import { getAllShows } from "../services/bookingService";
+import { getAllShows, getdates } from "../services/bookingService";
 
 function BookingPage() {
   const { movieId } = useParams();
-
+  const [availableDates, setAvailableDates] = useState([]);
+  const [date, setDate] = useState("");
   const navigate = useNavigate();
 
   const [loadingMovie, setLoadingMovie] = useState(true);
@@ -18,17 +19,23 @@ function BookingPage() {
 
   const [city, setCity] = useState("Delhi");
 
-  const [date, setDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  // const [date, setDate] = useState(
+  //   new Date().toISOString().split("T")[0]
+  // );
 
   useEffect(() => {
     fetchMovie();
   }, [movieId]);
 
   useEffect(() => {
-    fetchShows();
+    if (date) {
+      fetchShows();
+    }
   }, [city, date]);
+
+  useEffect(() => {
+    fetchAvailableDates();
+  }, [movieId, city]);
 
   const fetchMovie = async () => {
     setLoadingMovie(true);
@@ -42,7 +49,19 @@ function BookingPage() {
       setLoadingMovie(false);
     }
   };
+  const fetchAvailableDates = async () => {
+    try {
+      const response = await getdates(movieId, city);
 
+      setAvailableDates(response.data.dates);
+
+      if (response.data.dates.length > 0) {
+        setDate(response.data.dates[0].split("T")[0]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const fetchShows = async () => {
     try {
       const response = await getAllShows(
@@ -108,12 +127,21 @@ function BookingPage() {
             <option>Bhopal</option>
           </select>
 
-          <input
-            type="date"
+          <select
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="bg-zinc-800 p-3 rounded-lg text-white"
-          />
+          >
+            {availableDates.map((d) => (
+              <option key={d} value={d.split("T")[0]}>
+                {new Date(d).toLocaleDateString("en-IN", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })}
+              </option>
+            ))}
+          </select>
         </div>
 
         {shows.length === 0 ? (

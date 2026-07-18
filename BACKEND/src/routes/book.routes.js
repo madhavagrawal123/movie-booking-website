@@ -19,4 +19,5 @@ router.get('/getReview/:userId/:tmdbMovieId',  bookController.getReview);
 router.put('/updateReview/:reviewId', auth, bookController.updateReview);
 router.get('/getShowSeats/:showId', bookController.getShowSeats);
 router.post ('/release-seats/:showId', auth, bookController.releaseSeats );
+router.get("/available-dates/:movieId", auth,bookController.getAvailableDates);
 module.exports = router;

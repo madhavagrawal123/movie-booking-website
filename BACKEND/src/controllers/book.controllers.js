@@ -10,6 +10,36 @@ const showModel = require("../models/show.model");
 const { getIO } = require("../socket/socket");
 
 
+ 
+const getAvailableDates = async (req, res) => {
+    try {
+        const { movieId } = req.params;
+        const { city } = req.query;
+        console.log("show-dates hitting")
+        const theatres = await threatremodel.find({ city }).select("_id");
+
+        const theatreIds = theatres.map(theatre => theatre._id);
+
+        const dates = await showModel.distinct("showDate", {
+            tmdbMovieId: Number(movieId),
+            theatreId: { $in: theatreIds },
+        });
+
+        dates.sort((a, b) => new Date(a) - new Date(b));
+
+        res.status(200).json({
+            success: true,
+            dates,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        });
+    }
+};
+
 
 async function Allshows(req, res) {
   try {
@@ -571,6 +601,7 @@ async function getWishlist(req, res) {
   }
 }
 
+
 async function checkWishlist(req, res) {
 
   try {
@@ -686,5 +717,6 @@ module.exports = {
   getBookingHistory,
   getWishlist,
   checkWishlist,
-  releaseSeats
+  releaseSeats,
+  getAvailableDates
 };

@@ -61,7 +61,7 @@ useEffect(() => {
             toast.success("Show created successfully!");
 
             navigate(
-                `owner/theatres/${theatreId}/screens/${screenId}/shows`
+                `/owner/theatres/${theatreId}/screens/${screenId}/shows`
             );
 
         } catch (error) {
